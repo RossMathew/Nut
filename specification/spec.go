@@ -22,6 +22,8 @@ type Manifest struct {
 	Maintainers  []string
 	ExposedPorts []uint64
 	EntryPoint   []string
+	Env          []string
+	User         string
 }
 
 type BuilderState struct {
@@ -143,6 +145,13 @@ func (spec *Spec) Build(volume string) error {
 				log.Errorf("Failed to clone container. Error: %s\n", err)
 				return err
 			}
+			m, manifestErr := LoadManifestFromExistingContainer(name)
+			if manifestErr != nil {
+				log.Errorf("Failed to load manifest from patent container. Error: %s\n", manifestErr)
+			} else {
+				spec.State.manifest.Env = m.Env
+				spec.State.Env = m.Env
+			}
 		case "RUN":
 			if spec.State.Container == nil {
 				log.Error("No container has been created yet. Use FROM directive")
@@ -158,8 +167,10 @@ func (spec *Spec) Build(volume string) error {
 			for i := 1; i < len(words); i++ {
 				if strings.Contains(words[i], "=") {
 					spec.State.Env = append(spec.State.Env, words[i])
+					spec.State.manifest.Env = append(spec.State.manifest.Env, words[i])
 				} else {
 					spec.State.Env = append(spec.State.Env, words[i]+"="+words[i+1])
+					spec.State.manifest.Env = append(spec.State.manifest.Env, words[i]+"="+words[i+1])
 					i++
 				}
 			}
@@ -194,7 +205,7 @@ func (spec *Spec) Build(volume string) error {
 		case "MAINTAINER":
 			spec.State.manifest.Maintainers = append(spec.State.manifest.Maintainers, strings.Join(words[1:len(words)], " "))
 		case "USER":
-			// FIXME
+			spec.State.manifest.User = words[1]
 		case "VOLUME":
 			// FIXME
 		case "STOPSIGNAL":

@@ -21,6 +21,7 @@ func main() {
 		"publish": commands.Publish,
 		"restore": commands.Restore,
 		"run":     commands.Run,
+		"multi":   commands.Multi,
 	}
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	exitStatus, err := c.Run()
