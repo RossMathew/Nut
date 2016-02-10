@@ -23,6 +23,7 @@ type Manifest struct {
 	ExposedPorts []uint64
 	EntryPoint   []string
 	Env          []string
+	User         string
 }
 
 type BuilderState struct {
@@ -204,7 +205,7 @@ func (spec *Spec) Build(volume string) error {
 		case "MAINTAINER":
 			spec.State.manifest.Maintainers = append(spec.State.manifest.Maintainers, strings.Join(words[1:len(words)], " "))
 		case "USER":
-			// FIXME
+			spec.State.manifest.User = words[1]
 		case "VOLUME":
 			// FIXME
 		case "STOPSIGNAL":
