@@ -24,8 +24,8 @@ func (m *Member) Create(name string) error {
 	if err != nil {
 		return err
 	}
-	spec := New(name, file)
-	if err := spec.Parse(); err != nil {
+	spec := New(name)
+	if err := spec.Parse(file); err != nil {
 		return err
 	}
 	if err := spec.Build(m.Volumes...); err != nil {

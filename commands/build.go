@@ -73,9 +73,9 @@ func (command *BuildCommand) Run(args []string) int {
 		name = &uuid
 	}
 
-	spec := specification.New(*name, *file)
+	spec := specification.New(*name)
 
-	if err := spec.Parse(); err != nil {
+	if err := spec.Parse(*file); err != nil {
 		log.Errorf("Failed to parse dockerfile. Error: %s\n", err)
 		return -1
 	}

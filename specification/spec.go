@@ -17,39 +17,28 @@ import (
 	"strings"
 )
 
-type Manifest struct {
-	Labels       map[string]string
-	Maintainers  []string
-	ExposedPorts []uint64
-	EntryPoint   []string
-	Env          []string
-	User         string
-}
-
 type BuilderState struct {
 	Container *lxc.Container
 	Env       []string
 	Cwd       string
-	manifest  Manifest
+	Manifest  Manifest
 }
 
 type Spec struct {
 	ID         string
-	File       string
 	Statements []string
 	State      BuilderState
 }
 
-func New(id, file string) *Spec {
+func New(id string) *Spec {
 	return &Spec{
 		ID:         id,
-		File:       file,
 		Statements: []string{},
 	}
 }
 
-func (spec *Spec) Parse() error {
-	fi, err := os.Open(spec.File)
+func (spec *Spec) Parse(file string) error {
+	fi, err := os.Open(file)
 
 	if err != nil {
 		return err
@@ -124,7 +113,7 @@ func (spec *Spec) Destroy() error {
 
 func (spec *Spec) Build(volumes ...string) error {
 	spec.State = BuilderState{
-		manifest: Manifest{
+		Manifest: Manifest{
 			Labels:       make(map[string]string),
 			ExposedPorts: []uint64{},
 		},
@@ -147,12 +136,9 @@ func (spec *Spec) Build(volumes ...string) error {
 					return err
 				}
 			}
-			m, manifestErr := LoadManifestFromExistingContainer(name)
+			manifestErr := spec.State.Manifest.Load(name)
 			if manifestErr != nil {
-				log.Errorf("Failed to load manifest from patent container. Error: %s\n", manifestErr)
-			} else {
-				spec.State.manifest.Env = m.Env
-				spec.State.Env = m.Env
+				log.Warnf("Failed to load manifest from patent container. Error: %s\n", manifestErr)
 			}
 		case "RUN":
 			if spec.State.Container == nil {
@@ -161,7 +147,7 @@ func (spec *Spec) Build(volumes ...string) error {
 			}
 			command := words[1:len(words)]
 			log.Debugf("Attempting to execute: %#v\n", command)
-			if err := spec.runCommand(command); err != nil {
+			if err := spec.RunCommand(command); err != nil {
 				log.Errorf("Failed to run command inside container. Error: %s\n", err)
 				return err
 			}
@@ -169,15 +155,16 @@ func (spec *Spec) Build(volumes ...string) error {
 			for i := 1; i < len(words); i++ {
 				if strings.Contains(words[i], "=") {
 					spec.State.Env = append(spec.State.Env, words[i])
-					spec.State.manifest.Env = append(spec.State.manifest.Env, words[i])
+					spec.State.Manifest.Env = append(spec.State.Manifest.Env, words[i])
 				} else {
 					spec.State.Env = append(spec.State.Env, words[i]+"="+words[i+1])
-					spec.State.manifest.Env = append(spec.State.manifest.Env, words[i]+"="+words[i+1])
+					spec.State.Manifest.Env = append(spec.State.Manifest.Env, words[i]+"="+words[i+1])
 					i++
 				}
 			}
 		case "WORKDIR":
 			spec.State.Cwd = words[1]
+			spec.State.Manifest.WorkDir = words[1]
 		case "ADD":
 			if err := spec.addFiles(words[1], words[2]); err != nil {
 				return err
@@ -190,7 +177,7 @@ func (spec *Spec) Build(volumes ...string) error {
 			for i := 1; i < len(words); i++ {
 				if strings.Contains(words[i], "=") {
 					pair := strings.Split(words[i], "=")
-					spec.State.manifest.Labels[pair[0]] = pair[1]
+					spec.State.Manifest.Labels[pair[0]] = pair[1]
 				} else {
 					log.Fatalf("Invalid LABEL instruction. LABELS must have '=' in them")
 					return errors.New("Invalid LABEL instruction. LABELS must have '=' in them")
@@ -202,26 +189,26 @@ func (spec *Spec) Build(volumes ...string) error {
 				if err != nil {
 					log.Errorf("Error parsing ports in EXPOSE instruction. Err:%s\n", err)
 				}
-				spec.State.manifest.ExposedPorts = append(spec.State.manifest.ExposedPorts, port)
+				spec.State.Manifest.ExposedPorts = append(spec.State.Manifest.ExposedPorts, port)
 			}
 		case "MAINTAINER":
-			spec.State.manifest.Maintainers = append(spec.State.manifest.Maintainers, strings.Join(words[1:len(words)], " "))
+			spec.State.Manifest.Maintainers = append(spec.State.Manifest.Maintainers, strings.Join(words[1:len(words)], " "))
 		case "USER":
-			spec.State.manifest.User = words[1]
+			spec.State.Manifest.User = words[1]
 		case "VOLUME":
 			// FIXME
 		case "STOPSIGNAL":
 			// FIXME
 		case "CMD":
-			if len(spec.State.manifest.EntryPoint) == 0 {
-				spec.State.manifest.EntryPoint = words[1:]
+			if len(spec.State.Manifest.EntryPoint) == 0 {
+				spec.State.Manifest.EntryPoint = words[1:]
 			} else {
 				log.Errorf("Entrypoint/CMD is already defined. Probably multiple declaration")
 				return fmt.Errorf("Entrypoint/CMD is already defined. Probably multiple declaration")
 			}
 		case "ENTRYPOINT":
-			if len(spec.State.manifest.EntryPoint) == 0 {
-				spec.State.manifest.EntryPoint = words[1:]
+			if len(spec.State.Manifest.EntryPoint) == 0 {
+				spec.State.Manifest.EntryPoint = words[1:]
 			} else {
 				log.Errorf("Entrypoint/CMD is already defined. Probably multiple declaration")
 				return fmt.Errorf("Entrypoint/CMD is already defined. Probably multiple declaration")
@@ -238,10 +225,10 @@ func (spec *Spec) Build(volumes ...string) error {
 
 func (spec *Spec) fetchArtifact() error {
 	rootfs := spec.State.Container.ConfigItem("lxc.rootfs")[0]
-	for k, v := range spec.State.manifest.Labels {
+	for k, v := range spec.State.Manifest.Labels {
 		if strings.HasPrefix(k, "nut_artifact_") {
 			artifact := filepath.Base(v)
-			if err := spec.runCommand([]string{"cp", "-r", v, filepath.Join("/tmp", artifact)}); err != nil {
+			if err := spec.RunCommand([]string{"cp", "-r", v, filepath.Join("/tmp", artifact)}); err != nil {
 				log.Errorf("Failed to copy artifact to /tmp. Error: %s\n", err)
 				return err
 			}
@@ -257,14 +244,21 @@ func (spec *Spec) fetchArtifact() error {
 
 func (spec *Spec) addFiles(src, dest string) error {
 	rootfs := spec.State.Container.ConfigItem("lxc.rootfs")[0]
-	base := filepath.Base(src)
-	tmpContainer := filepath.Join(rootfs, "tmp", base)
-	cmd := exec.Command("/bin/cp", "-ar", src, tmpContainer)
-	if err := cmd.Run(); err != nil {
-		log.Errorf("Failed to copy temporary files from host to container tmp directory.\n", err)
+	absPath, err := filepath.Abs(src)
+	if err != nil {
 		return err
 	}
-	if err := spec.runCommand([]string{"cp", "-r", filepath.Join("/tmp", filepath.Base(src)), dest}); err != nil {
+	base := filepath.Base(absPath)
+	tmpContainer := filepath.Join(rootfs, "tmp", base)
+	cmd := exec.Command("/bin/cp", "-ar", absPath, tmpContainer)
+	log.Warnln("/bin/cp", "-ar", absPath, tmpContainer)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		log.Errorln("Failed to copy temporary files from host to container tmp directory")
+		log.Errorln("Error:", err)
+		log.Errorln("Output:", out)
+		return err
+	}
+	if err := spec.RunCommand([]string{"cp", "-r", filepath.Join("/tmp", base), dest}); err != nil {
 		log.Errorf("Failed to copy temporary files within container's /tmp to target directory. Error: %s\n", err)
 		return err
 	}
@@ -279,14 +273,14 @@ func (spec *Spec) addFiles(src, dest string) error {
 func (spec *Spec) writeManifest() error {
 	rootfs := spec.State.Container.ConfigItem("lxc.rootfs")[0]
 	manifestPath := filepath.Join(rootfs, "../manifest.yml")
-	d, err := yaml.Marshal(&spec.State.manifest)
+	d, err := yaml.Marshal(&spec.State.Manifest)
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(manifestPath, d, 0644)
 }
 
-func (spec *Spec) runCommand(command []string) error {
+func (spec *Spec) RunCommand(command []string) error {
 	options := lxc.DefaultAttachOptions
 	options.Cwd = "/root"
 	options.Env = MinimalEnv
@@ -302,6 +296,9 @@ func (spec *Spec) runCommand(command []string) error {
 	options.ClearEnv = true
 	if spec.State.Cwd != "" {
 		buffer.WriteString("cd " + spec.State.Cwd + "\n")
+	}
+	if spec.State.Manifest.User != "" {
+		buffer.WriteString("su - " + spec.State.Manifest.User + "\n")
 	}
 	buffer.WriteString(strings.Join(command, " "))
 	err := ioutil.WriteFile(filepath.Join(rootfs, "/tmp/dockerfile.sh"), buffer.Bytes(), 0755)

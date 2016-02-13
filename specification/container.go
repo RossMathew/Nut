@@ -9,8 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/lxc/go-lxc.v2"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,20 +90,6 @@ func SetupBindMounts(container *lxc.Container, volume string) error {
 	return nil
 }
 
-func LoadManifestFromExistingContainer(name string) (*Manifest, error) {
-	lxcdir := lxc.GlobalConfigItem("lxc.lxcpath")
-	manifestPath := filepath.Join(lxcdir, name, "manifest.yml")
-	data, err := ioutil.ReadFile(manifestPath)
-	if err != nil {
-		return nil, err
-	}
-	var manifest Manifest
-	yamlErr := yaml.Unmarshal(data, &manifest)
-	if yamlErr != nil {
-		return nil, yamlErr
-	}
-	return &manifest, nil
-}
 func CloneAndStartContainer(original, cloned, volume string) (*lxc.Container, error) {
 	orig, err := lxc.NewContainer(original)
 	if err != nil {
