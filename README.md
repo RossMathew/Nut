@@ -6,10 +6,12 @@ Build [LXC](http://linuxcontainers.org/) containers using [Dockerfile](https://d
 
 Nut is a minimal golang based CLI for building LXC containers. It allows user create containers
 using [Dockerfile](https://docs.docker.com/engine/reference/builder/) like syntax, archiving and publishing them in s3.
-Nut is intended to be used in CI/CD infrastructure to build & publish container images as artifacts.
+Nut is intended to be used in CI/CD infrastructure to build & publish container images as artifacts. Nut complements
+the lxc cli tools, as well as provide golang based public API to for extensions.
 
 ### Usage
-All features of nut are implemented in set of sub commands
+
+All features of nut are implemented as set of sub commands
 ```
 nut --help
 ```
@@ -27,8 +29,8 @@ Available commands are:
     run        Run command/entrypoint inside a container
 
 ```
-- *build*, *restore* and *fetch* is used create containers from dockerfile like syntax of images stored in s3 or localdisk 
-- *multi* is used to setup multi-container environments from [docker-compose](https://docs.docker.com/compose/compose-file/) like specification.
+- *build*, *restore* and *fetch* is used create containers. From dockerfile like syntax or images stored in s3 or localdisk 
+- *multi* is used to setup a group of containers from [docker-compose](https://docs.docker.com/compose/compose-file/) like specification.
 - *archive* and *publish*  allows creating and publishing container images in s3
 
 #### Artifact  Labels
