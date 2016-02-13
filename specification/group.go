@@ -6,7 +6,8 @@ import (
 )
 
 type Group struct {
-	Members map[string]Member
+	Version string            `yaml:"version"`
+	Members map[string]Member `yaml:"services"`
 }
 
 func GroupFromYAML(file string) (*Group, error) {
@@ -15,7 +16,7 @@ func GroupFromYAML(file string) (*Group, error) {
 		return nil, err
 	}
 	var g Group
-	if err := yaml.Unmarshal(data, &g.Members); err != nil {
+	if err := yaml.Unmarshal(data, &g); err != nil {
 		return nil, err
 	}
 	return &g, nil
