@@ -1,4 +1,4 @@
-package specification
+package container
 
 import (
 	"gopkg.in/lxc/go-lxc.v2"
@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// Manifest represents metadata about a container
 type Manifest struct {
 	Labels       map[string]string
 	Maintainers  []string
@@ -17,6 +18,7 @@ type Manifest struct {
 	WorkDir      string
 }
 
+// Load loads manifest details from an yaml file
 func (m *Manifest) Load(name string) error {
 	lxcdir := lxc.GlobalConfigItem("lxc.lxcpath")
 	manifestPath := filepath.Join(lxcdir, name, "manifest.yml")

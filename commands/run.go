@@ -3,10 +3,9 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"github.com/PagerDuty/nut/specification"
+	"github.com/PagerDuty/nut/container"
 	"github.com/mitchellh/cli"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/lxc/go-lxc.v2"
 	"strings"
 )
 
@@ -46,24 +45,16 @@ func (command *RunCommand) Run(args []string) int {
 		return 1
 	}
 	name := flagSet.Args()[0]
-	spec := specification.New(name)
-	ct, err := lxc.NewContainer(name)
+	ct, err := container.NewContainer(name)
 	if err != nil {
-		log.Errorf("Failed to initialize container object. Error: %v", err)
+		log.Errorln(err)
 		return 1
 	}
-	spec.State.Container = ct
-	if err := spec.State.Manifest.Load(name); err != nil {
-		log.Warnln("Failed to load manifest from patent container. Error:", err)
-	} else {
-		spec.State.Env = spec.State.Manifest.Env
-		spec.State.Cwd = spec.State.Manifest.WorkDir
-	}
-	cmdParts := spec.State.Manifest.EntryPoint
+	cmdParts := ct.Manifest.EntryPoint
 	if *cmd != "" {
 		cmdParts = strings.Fields(*cmd)
 	}
-	if err := spec.RunCommand(cmdParts); err != nil {
+	if err := ct.RunCommand(cmdParts); err != nil {
 		log.Errorln(err)
 		return 1
 	}

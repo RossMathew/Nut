@@ -3,7 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"github.com/PagerDuty/nut/specification"
+	"github.com/PagerDuty/nut/container"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -77,20 +77,30 @@ func (command *FetchCommand) Run(args []string) int {
 		return -1
 	}
 	log.Infof("Image written to: %s\n", fo.Name())
-	fo.Close()
 	if *name == "" {
-		uuid, err := specification.UUID()
+		uuid, err := container.UUID()
 		if err != nil {
 			log.Errorln(err)
 			return -1
 		}
 		name = &uuid
 	}
-	if err := specification.DecompressImage(*name, fo.Name(), *sudo); err != nil {
+	i, err := container.NewImage(*name, fo.Name())
+	if err != nil {
 		log.Errorln(err)
 		return -1
 	}
-	if err := specification.UpdateUTS(*name); err != nil {
+	fo.Close()
+	if err := i.Decompress(*sudo); err != nil {
+		log.Errorln(err)
+		return -1
+	}
+	ct, err := container.NewContainer(*name)
+	if err != nil {
+		log.Errorln(err)
+		return -1
+	}
+	if err := ct.UpdateUTS(*name); err != nil {
 		log.Errorln(err)
 		return -1
 	}

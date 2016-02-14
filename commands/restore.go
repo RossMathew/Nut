@@ -4,7 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/PagerDuty/nut/specification"
+	"github.com/PagerDuty/nut/container"
 	"github.com/mitchellh/cli"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -47,13 +47,24 @@ func (command *RestoreCommand) Run(args []string) int {
 		return -1
 	}
 
-	if err := specification.DecompressImage(args[0], args[1], *sudo); err != nil {
+	i, err := container.NewImage(args[0], args[1])
+	if err != nil {
+		log.Errorln(err)
+		return -1
+	}
+
+	if err := i.Decompress(*sudo); err != nil {
 		log.Errorf("Failed to restore container. Error: %s\n", err)
 		return -1
 	}
 
-	if err := specification.UpdateUTS(args[0]); err != nil {
-		log.Errorf("Failed to restore container. Error: %s\n", err)
+	ct, err := container.NewContainer(args[0])
+	if err != nil {
+		log.Errorln(err)
+		return -1
+	}
+	if err := ct.UpdateUTS(args[0]); err != nil {
+		log.Errorln(err)
 		return -1
 	}
 	return 0
