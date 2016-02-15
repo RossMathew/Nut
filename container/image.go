@@ -19,6 +19,8 @@ type Image struct {
 	ct   *lxc.Container
 }
 
+// NewImage Returns a Image struct for the provided container name and
+// image path
 func NewImage(name, path string) (*Image, error) {
 	ct, err := lxc.NewContainer(name)
 	if err != nil {

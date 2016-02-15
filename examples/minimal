@@ -1,3 +1,4 @@
-FROM vivid
+FROM trusty
+MAINTAINER foo@example.com
 
 RUN echo Hello
