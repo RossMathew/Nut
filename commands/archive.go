@@ -4,7 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/PagerDuty/nut/specification"
+	"github.com/PagerDuty/nut/container"
 	"github.com/mitchellh/cli"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -48,8 +48,13 @@ func (command *ArchiveCommand) Run(args []string) int {
 		return -1
 	}
 
-	if err := specification.ExportContainer(args[0], args[1], *sudo); err != nil {
-		log.Errorf("Failed to export container. Error: %s\n", err)
+	image, err := container.NewImage(args[0], args[1])
+	if err != nil {
+		log.Errorf("Failed to initialize container. Error: %s\n", err)
+		return -1
+	}
+	if err := image.Create(*sudo); err != nil {
+		log.Errorf("Failed to create image. Error: %s\n", err)
 		return -1
 	}
 	return 0

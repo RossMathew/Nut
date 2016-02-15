@@ -3,7 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"github.com/PagerDuty/nut/specification"
+	"github.com/PagerDuty/nut/container"
 	"github.com/mitchellh/cli"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -44,7 +44,7 @@ func (command *BuildCommand) Run(args []string) int {
 
 	flagSet.Parse(args)
 	if *name == "" {
-		uuid, err := specification.UUID()
+		uuid, err := container.UUID()
 		if err != nil {
 			log.Errorln(err)
 			return -1
@@ -52,21 +52,28 @@ func (command *BuildCommand) Run(args []string) int {
 		name = &uuid
 	}
 
-	spec := specification.New(*name)
-
-	if err := spec.Parse(*file); err != nil {
+	b := container.NewBuilder(*name)
+	if *volume != "" {
+		b.Volumes = []string{*volume}
+	}
+	if err := b.Parse(*file); err != nil {
 		log.Errorf("Failed to parse dockerfile. Error: %s\n", err)
 		return -1
 	}
 
-	if err := spec.Build(*volume); err != nil {
+	ct, err := b.Build()
+	if err != nil {
 		log.Errorf("Failed to build container from dockerfile. Error: %s\n", err)
 		return -1
 	}
 
 	if *ephemeral {
 		log.Infof("Ephemeral mode. Destroying the container")
-		if err := spec.Destroy(); err != nil {
+		if err := ct.Stop(); err != nil {
+			log.Errorf("Failed to stop container. Error: %s\n", err)
+			return -1
+		}
+		if err := ct.Destroy(); err != nil {
 			log.Errorf("Failed to destroy container. Error: %s\n", err)
 			return -1
 		}

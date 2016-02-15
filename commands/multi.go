@@ -3,7 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"github.com/PagerDuty/nut/specification"
+	"github.com/PagerDuty/nut/container"
 	"github.com/mitchellh/cli"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -40,7 +40,7 @@ func (command *MultiCommand) Run(args []string) int {
 	flagSet.Usage = func() { fmt.Println(command.Help()) }
 	file := flagSet.String("specfile", "docker-compose.yml", "Multi-container specification file")
 	flagSet.Parse(args)
-	g, err := specification.GroupFromYAML(*file)
+	g, err := container.GroupFromYAML(*file)
 	if err != nil {
 		log.Errorln(err)
 		return -1

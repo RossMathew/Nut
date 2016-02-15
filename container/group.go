@@ -1,15 +1,17 @@
-package specification
+package container
 
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
 
+// Group represents a set of containers
 type Group struct {
 	Version string            `yaml:"version"`
 	Members map[string]Member `yaml:"services"`
 }
 
+// GroupFromYAML initializes a Group struct from yaml file
 func GroupFromYAML(file string) (*Group, error) {
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -22,6 +24,7 @@ func GroupFromYAML(file string) (*Group, error) {
 	return &g, nil
 }
 
+// Create creates the containes defined inside the group
 func (g *Group) Create() error {
 	for name, member := range g.Members {
 		if err := member.Create(name); err != nil {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/PagerDuty/nut/specification"
+	"github.com/PagerDuty/nut/container"
 	"github.com/mitchellh/cli"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -46,7 +46,12 @@ func (command *PublishCommand) Run(args []string) int {
 		log.Errorln(errors.New("Insufficient argument. Please pass container image file, s3 region, bucket and key"))
 		return -1
 	}
-	if err := specification.Publish(args[0], args[1], args[2], args[3]); err != nil {
+	i, err := container.NewImage("", args[0])
+	if err != nil {
+		log.Errorln(err)
+		return -1
+	}
+	if err := i.Publish(args[1], args[2], args[3]); err != nil {
 		log.Errorln(err)
 		return -1
 	}
