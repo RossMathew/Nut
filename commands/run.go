@@ -50,6 +50,11 @@ func (command *RunCommand) Run(args []string) int {
 		log.Errorln(err)
 		return 1
 	}
+	if err := ct.Manifest.Load(name); err != nil {
+		log.Errorln("Failed to load container manifest")
+		log.Errorln(err)
+		return 1
+	}
 	cmdParts := ct.Manifest.EntryPoint
 	if *cmd != "" {
 		cmdParts = strings.Fields(*cmd)
