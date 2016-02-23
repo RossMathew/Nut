@@ -1,4 +1,5 @@
 FROM trusty
 MAINTAINER foo@example.com
-
 RUN echo Hello
+COPY sleep.sh /sleep.sh
+ENTRYPOINT /sleep.sh

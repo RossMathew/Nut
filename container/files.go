@@ -11,14 +11,10 @@ import (
 
 func (c *Container) addFiles(src, dest string) error {
 	rootfs := c.ct.ConfigItem("lxc.rootfs")[0]
-	absPath, err := filepath.Abs(src)
-	if err != nil {
-		return err
-	}
-	base := filepath.Base(absPath)
+	base := filepath.Base(src)
 	tmpContainer := filepath.Join(rootfs, "tmp", base)
-	cmd := exec.Command("/bin/cp", "-ar", absPath, tmpContainer)
-	log.Warnln("/bin/cp", "-ar", absPath, tmpContainer)
+	cmd := exec.Command("/bin/cp", "-ar", src, tmpContainer)
+	log.Warnln("/bin/cp", "-ar", src, tmpContainer)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		log.Errorln("Failed to copy temporary files from host to container tmp directory")
 		log.Errorln("Error:", err)
