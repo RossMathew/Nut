@@ -6,6 +6,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ type Builder struct {
 	Name       string
 	Volumes    []string
 	Statements []string
+	RootDir    string
 }
 
 // NewBuilder returns a Builder struct
@@ -65,6 +67,11 @@ func (b *Builder) Parse(file string) error {
 		}
 	}
 	b.Statements = statements
+	absPath, err := filepath.Abs(file)
+	if err != nil {
+		return err
+	}
+	b.RootDir = filepath.Dir(absPath)
 	return nil
 }
 
@@ -130,11 +137,11 @@ func (b *Builder) Build() (*Container, error) {
 		case "WORKDIR":
 			c.Manifest.WorkDir = words[1]
 		case "ADD":
-			if err := c.addFiles(words[1], words[2]); err != nil {
+			if err := c.addFiles(filepath.Join(b.RootDir, words[1]), words[2]); err != nil {
 				return nil, err
 			}
 		case "COPY":
-			if err := c.addFiles(words[1], words[2]); err != nil {
+			if err := c.addFiles(filepath.Join(b.RootDir, words[1]), words[2]); err != nil {
 				return nil, err
 			}
 		case "LABEL":

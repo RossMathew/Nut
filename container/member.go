@@ -8,13 +8,15 @@ import (
 
 // Member represents an individual member in a container group
 type Member struct {
-	Build       string
-	Command     string
-	Volumes     []string
-	User        string
-	Environment []string
-	Ports       []string
-	ct          *Container
+	Build         string
+	ContainerName string `yaml:"container_name"`
+	Hostname      string `yaml:"hostname"`
+	Command       string
+	Volumes       []string
+	User          string
+	Environment   []string
+	Ports         []string
+	ct            *Container
 }
 
 // Create creates a container from member specification
