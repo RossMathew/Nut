@@ -14,8 +14,8 @@ func Test_Builder(t *testing.T) {
 	if err := b.Parse(specfile); err != nil {
 		t.Fatal(err)
 	}
-	if len(b.Statements) != 3 {
-		t.Fatalf("Number of statements: %d, not 3", len(b.Statements))
+	if len(b.Statements) <= 0 {
+		t.Fatalf("Zero build instructions")
 	}
 	ct, err := b.Build()
 	if err != nil {
