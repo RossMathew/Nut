@@ -52,7 +52,7 @@ func (c *Container) fetchArtifacts() error {
 	return nil
 }
 
-func (c *Container) writeManifest() error {
+func (c *Container) WriteManifest() error {
 	rootfs := c.ct.ConfigItem("lxc.rootfs")[0]
 	manifestPath := filepath.Join(rootfs, "../manifest.yml")
 	d, err := yaml.Marshal(&c.Manifest)

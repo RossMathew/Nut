@@ -1,7 +1,8 @@
 package container
 
 import (
-	"errors"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
 )
@@ -16,11 +17,25 @@ type Member struct {
 	User          string
 	Environment   []string
 	Ports         []string
+	Image         string
 	ct            *Container
 }
 
 // Create creates a container from member specification
 func (m *Member) Create(name string) error {
+	b := NewBuilder(name)
+	b.Volumes = m.Volumes
+	if m.Image != "" {
+		log.Debugln("Creating container from image", m.Image)
+		c, err := b.CreateContainer(m.Image)
+		if err != nil {
+			return err
+		}
+		if err := c.WriteManifest(); err != nil {
+			return err
+		}
+		m.ct = c
+	}
 	if m.Build == "" {
 		return nil
 	}
@@ -28,8 +43,6 @@ func (m *Member) Create(name string) error {
 	if err != nil {
 		return err
 	}
-	b := NewBuilder(name)
-	b.Volumes = m.Volumes
 	if err := b.Parse(file); err != nil {
 		return err
 	}
@@ -52,7 +65,7 @@ func expandPath(file string) (string, error) {
 // RunCommand runs the member's specified command inside it representative container
 func (m *Member) RunCommand() error {
 	if m.ct == nil {
-		return errors.New("Container for this member has not been created yet")
+		return fmt.Errorf("Container for member '%s' has not been created yet", m.ContainerName)
 	}
 	return m.ct.RunCommand(strings.Fields(m.Command))
 }

@@ -25,7 +25,7 @@ func (command *RunCommand) Help() string {
   Options:
 		-command Command to run (quoted)
 	`
-	return strings.TrimSpace(helpText)
+	return strings.TrimSpace(helpText) + AddCommonHelp()
 }
 
 func (command *RunCommand) Synopsis() string {
@@ -36,10 +36,12 @@ func (command *RunCommand) Run(args []string) int {
 	flagSet := flag.NewFlagSet("run", flag.ExitOnError)
 	flagSet.Usage = func() { fmt.Println(command.Help()) }
 	cmd := flagSet.String("command", "", "Command to run inside the container")
+	AddCommonFlags(flagSet)
 	if err := flagSet.Parse(args); err != nil {
 		log.Errorln(err)
 		return 1
 	}
+	ConfigureLogging()
 	if len(flagSet.Args()) != 1 {
 		log.Errorln("You have to pass container name as argument")
 		return 1

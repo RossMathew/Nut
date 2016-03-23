@@ -24,8 +24,10 @@ func (command *PublishCommand) Help() string {
 	nut publish is used to publish a rootfs image into s3
 	Use environment variables or .credential file to pass
 	aws credentials
+
+	Options:
 	`
-	return strings.TrimSpace(helpText)
+	return strings.TrimSpace(helpText) + "\n" + AddCommonHelp()
 }
 
 func (command *PublishCommand) Synopsis() string {
@@ -36,11 +38,12 @@ func (command *PublishCommand) Run(args []string) int {
 
 	flagSet := flag.NewFlagSet("publish", flag.ExitOnError)
 	flagSet.Usage = func() { fmt.Println(command.Help()) }
+	AddCommonFlags(flagSet)
 	if err := flagSet.Parse(args); err != nil {
 		log.Errorln(err)
 		return -1
 	}
-
+	ConfigureLogging()
 	args = flagSet.Args()
 	if len(args) != 4 {
 		log.Errorln(errors.New("Insufficient argument. Please pass container image file, s3 region, bucket and key"))

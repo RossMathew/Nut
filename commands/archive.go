@@ -26,7 +26,7 @@ func (command *ArchiveCommand) Help() string {
 
 	-sudo    Use sudo while invoking tar
 	`
-	return strings.TrimSpace(helpText)
+	return strings.TrimSpace(helpText) + AddCommonHelp()
 }
 
 func (command *ArchiveCommand) Synopsis() string {
@@ -37,11 +37,12 @@ func (command *ArchiveCommand) Run(args []string) int {
 	flagSet := flag.NewFlagSet("archive", flag.ExitOnError)
 	flagSet.Usage = func() { fmt.Println(command.Help()) }
 	sudo := flagSet.Bool("sudo", false, "Use sudo while invoking tar")
+	AddCommonFlags(flagSet)
 	if err := flagSet.Parse(args); err != nil {
 		log.Errorln(err)
 		return -1
 	}
-
+	ConfigureLogging()
 	args = flagSet.Args()
 	if len(args) != 2 {
 		log.Errorln(errors.New("Insufficient argument. Please pass container name and image file name"))
