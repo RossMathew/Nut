@@ -2,6 +2,7 @@ package container
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
 )
@@ -16,11 +17,25 @@ type Member struct {
 	User          string
 	Environment   []string
 	Ports         []string
+	Image         string
 	ct            *Container
 }
 
 // Create creates a container from member specification
 func (m *Member) Create(name string) error {
+	b := NewBuilder(name)
+	b.Volumes = m.Volumes
+	if m.Image != "" {
+		log.Debugln("Creating container from image", m.Image)
+		c, err := b.CreateContainer(m.Image)
+		if err != nil {
+			return err
+		}
+		if err := c.WriteManifest(); err != nil {
+			return err
+		}
+		m.ct = c
+	}
 	if m.Build == "" {
 		return nil
 	}
@@ -28,8 +43,6 @@ func (m *Member) Create(name string) error {
 	if err != nil {
 		return err
 	}
-	b := NewBuilder(name)
-	b.Volumes = m.Volumes
 	if err := b.Parse(file); err != nil {
 		return err
 	}

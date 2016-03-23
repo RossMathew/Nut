@@ -75,7 +75,7 @@ func (b *Builder) Parse(file string) error {
 	return nil
 }
 
-func (b *Builder) createContainer(from string) (*Container, error) {
+func (b *Builder) CreateContainer(from string) (*Container, error) {
 	parent := TagToName(from)
 	c, err := NewContainer(b.Name)
 	if err != nil {
@@ -111,7 +111,7 @@ func (b *Builder) Build() (*Container, error) {
 			if c != nil {
 				return nil, errors.New("Container already built. Multiple FROM declaration?")
 			}
-			c, err = b.createContainer(words[1])
+			c, err = b.CreateContainer(words[1])
 			if err != nil {
 				return nil, err
 			}
@@ -180,5 +180,5 @@ func (b *Builder) Build() (*Container, error) {
 	if err = c.fetchArtifacts(); err != nil {
 		return c, err
 	}
-	return c, c.writeManifest()
+	return c, c.WriteManifest()
 }
