@@ -46,7 +46,12 @@ func (command *FetchCommand) Run(args []string) int {
 	key := flagSet.String("key", "", "S3 key")
 	region := flagSet.String("region", "us-west-1", "S3 region")
 	sudo := flagSet.Bool("sudo", false, "Use sudo during decompression of image")
-	flagSet.Parse(args)
+	AddCommonFlags(flagSet)
+	if err := flagSet.Parse(args); err != nil {
+		log.Errorln(err)
+		return -1
+	}
+	ConfigureLogging()
 	if *bucket == "" {
 		log.Errorf("Must provide the s3 bucket name")
 		return -1

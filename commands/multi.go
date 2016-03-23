@@ -27,7 +27,7 @@ func (command *MultiCommand) Help() string {
 
 		-specfile=docker-compose.yml  Path of the specification file
 	`
-	return strings.TrimSpace(helpText)
+	return strings.TrimSpace(helpText) + AddCommonHelp()
 }
 
 func (command *MultiCommand) Synopsis() string {
@@ -39,7 +39,12 @@ func (command *MultiCommand) Run(args []string) int {
 	flagSet := flag.NewFlagSet("multi", flag.ExitOnError)
 	flagSet.Usage = func() { fmt.Println(command.Help()) }
 	file := flagSet.String("specfile", "docker-compose.yml", "Multi-container specification file")
-	flagSet.Parse(args)
+	AddCommonFlags(flagSet)
+	if err := flagSet.Parse(args); err != nil {
+		log.Errorln(err)
+		return -1
+	}
+	ConfigureLogging()
 	g, err := container.GroupFromYAML(*file)
 	if err != nil {
 		log.Errorln(err)

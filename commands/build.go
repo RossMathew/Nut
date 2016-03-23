@@ -24,12 +24,11 @@ func (command *BuildCommand) Help() string {
 		-name        Name of the container (defaults to randomly generated UUID)
 		-volume      Mount host directory inside container
 	`
-	return strings.TrimSpace(helpText)
+	return strings.TrimSpace(helpText) + AddCommonHelp()
 }
 
 func (command *BuildCommand) Synopsis() string {
-	synopsis := "Build container from Dockerfile"
-	return synopsis
+	return "Build container from Dockerfile"
 }
 
 func (command *BuildCommand) Run(args []string) int {
@@ -41,8 +40,13 @@ func (command *BuildCommand) Run(args []string) int {
 	ephemeral := flagSet.Bool("ephemeral", false, "Destroy the container after creating it")
 	name := flagSet.String("name", "", "Name of the resulting container (defaults to randomly generated UUID)")
 	volume := flagSet.String("volume", "", "Mount host directory inside container. Format: '[host_directory:]container_directory[:mount options]")
+	AddCommonFlags(flagSet)
 
-	flagSet.Parse(args)
+	if err := flagSet.Parse(args); err != nil {
+		log.Errorln(err)
+		return -1
+	}
+	ConfigureLogging()
 	if *name == "" {
 		uuid, err := container.UUID()
 		if err != nil {
