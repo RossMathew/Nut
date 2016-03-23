@@ -1,7 +1,7 @@
 package container
 
 import (
-	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -52,7 +52,7 @@ func expandPath(file string) (string, error) {
 // RunCommand runs the member's specified command inside it representative container
 func (m *Member) RunCommand() error {
 	if m.ct == nil {
-		return errors.New("Container for this member has not been created yet")
+		return fmt.Errorf("Container for member '%s' has not been created yet", m.ContainerName)
 	}
 	return m.ct.RunCommand(strings.Fields(m.Command))
 }

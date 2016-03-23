@@ -50,6 +50,7 @@ func (command *MultiCommand) Run(args []string) int {
 		log.Errorln(err)
 		return -1
 	}
+	log.Debugf("Successfully created group specification form yaml file")
 	if err := g.Create(); err != nil {
 		log.Errorln(err)
 		return -1
