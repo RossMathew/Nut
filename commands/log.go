@@ -21,7 +21,7 @@ func ConfigureLogging() {
 	switch *loglevel {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
-	case "info":
+	case "info", "":
 		log.SetLevel(log.InfoLevel)
 	case "warn":
 		log.SetLevel(log.WarnLevel)
