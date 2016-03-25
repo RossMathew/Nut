@@ -18,11 +18,11 @@ func (c *Container) addFiles(src, dest string) error {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		log.Errorln("Failed to copy temporary files from host to container tmp directory")
 		log.Errorln("Error:", err)
-		log.Errorln("Output:", out)
+		log.Errorln("Output:", string(out[:]))
 		return err
 	}
 	if err := c.RunCommand([]string{"cp", "-r", filepath.Join("/tmp", base), dest}); err != nil {
-		log.Errorf("Failed to copy temporary files within container's /tmp to target directory. Error: %s\n", err)
+		log.Errorln("Failed to copy temporary files within container's /tmp to target directory. Error:", err)
 		return err
 	}
 	rmCmd := exec.Command("/bin/rm", "-rf", tmpContainer)
